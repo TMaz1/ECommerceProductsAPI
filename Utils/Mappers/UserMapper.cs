@@ -3,7 +3,7 @@ using ECommerceProductsAPI.Dtos.Subscription;
 using ECommerceProductsAPI.Dtos.Users;
 using ECommerceProductsAPI.Models;
 
-namespace ECommerceProductsAPI.Utils;
+namespace ECommerceProductsAPI.Utils.Mappers;
 
 public static class UserMapper
 {
@@ -25,7 +25,6 @@ public static class UserMapper
             UpdatedAt = user.UpdatedAt,
             Addresses = user.Addresses.Select(MapToAddressResponse).ToList() ?? [],
             Subscriptions = user.Subscriptions.Where(us => us.Subscription != null).Select(us => MapToSubscriptionResponse(us.Subscription!)).ToList() ?? []
-            // Subscriptions = user.Subscriptions.Select(us => MapToSubscriptionResponse(us.Subscription)).ToList() ?? []
         };
     }
 

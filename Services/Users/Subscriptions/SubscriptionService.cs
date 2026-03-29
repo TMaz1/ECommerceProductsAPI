@@ -4,15 +4,17 @@ using ECommerceProductsAPI.Dtos.Subscription;
 using ECommerceProductsAPI.Dtos.Users;
 using ECommerceProductsAPI.Models;
 using ECommerceProductsAPI.Models.Enums;
-using ECommerceProductsAPI.Repositories;
-using ECommerceProductsAPI.Utils;
+using ECommerceProductsAPI.Repositories.Products;
+using ECommerceProductsAPI.Repositories.Users;
+using ECommerceProductsAPI.Utils.Mappers;
 using Microsoft.EntityFrameworkCore;
 
 namespace ECommerceProductsAPI.Services.Users.Subscriptions;
-public class SubscriptionService(ProductsDataContext context, UserRepository userRepository) : ISubscriptionService
+public class SubscriptionService(ProductsDataContext context, IUserRepository userRepository, IProductRepository productRepository) : ISubscriptionService
 {
     private readonly ProductsDataContext _context = context;
-    private readonly UserRepository _userRepository = userRepository;
+    private readonly IUserRepository _userRepository = userRepository;
+    private readonly IProductRepository _productRepository = productRepository;
 
     public async Task<ServiceResponse<List<SubscriptionResponse>>> GetSubscriptionsByUserId(int userId)
     {
@@ -20,7 +22,7 @@ public class SubscriptionService(ProductsDataContext context, UserRepository use
 
         try
         {
-            var user = await _userRepository.GetUserDetailsByIdNoTracking(userId) ?? throw new Exception($"User with ID '{userId}' not found.");
+            var user = await _userRepository.GetUserDetailsById(userId) ?? throw new Exception($"User with ID '{userId}' not found.");
 
             var subscriptions = await _context.Subscriptions
                 .AsNoTracking()
@@ -48,9 +50,9 @@ public class SubscriptionService(ProductsDataContext context, UserRepository use
 
         try
         {
-            var user = await _userRepository.GetUserDetailsByIdWithTracking(subscriptionRequest.UserId) ?? throw new Exception($"User with ID '{subscriptionRequest.UserId}' not found.");
+            var user = await _userRepository.GetUserDetailsById(subscriptionRequest.UserId, asNoTracking: false) ?? throw new Exception($"User with ID '{subscriptionRequest.UserId}' not found.");
             
-            var product = await _userRepository.GetProductDetailsByIdWithTracking(subscriptionRequest.ProductId) ?? throw new Exception($"Product with ID '{subscriptionRequest.ProductId}' not found.");
+            var product = await _productRepository.GetProductDetailsById(subscriptionRequest.ProductId, asNoTracking: false) ?? throw new Exception($"Product with ID '{subscriptionRequest.ProductId}' not found.");
 
             if (product.IsSubscription == false)
             {
@@ -84,7 +86,7 @@ public class SubscriptionService(ProductsDataContext context, UserRepository use
             await _context.UserSubscriptions.AddAsync(userSubscription);
             await _context.SaveChangesAsync();
 
-            var updatedUser = await _userRepository.GetUserDetailsByIdNoTracking(user.Id) ?? throw new Exception($"Failed to retrieve the newly added subscription with ID '{newSubscription.Id}'.");
+            var updatedUser = await _userRepository.GetUserDetailsById(user.Id) ?? throw new Exception($"Failed to retrieve the newly added subscription with ID '{newSubscription.Id}'.");
 
             response.Data = MapToUserResponse(updatedUser);
             response.Message = $"Subscription with ID '{newSubscription.Id}' added successfully.";
@@ -131,7 +133,7 @@ public class SubscriptionService(ProductsDataContext context, UserRepository use
             _context.Subscriptions.Update(subscription);
             await _context.SaveChangesAsync();
 
-            var updatedUser = await _userRepository.GetUserDetailsByIdNoTracking(updatedRequest.UserId) ?? throw new Exception($"Updated user with ID '{updatedRequest.UserId}' not found.");
+            var updatedUser = await _userRepository.GetUserDetailsById(updatedRequest.UserId) ?? throw new Exception($"Updated user with ID '{updatedRequest.UserId}' not found.");
 
             response.Data = MapToUserResponse(updatedUser);
             response.Message = $"Successfully updated product with ID '{updatedRequest.UserId}'";
@@ -160,7 +162,7 @@ public class SubscriptionService(ProductsDataContext context, UserRepository use
 
             await _context.SaveChangesAsync();
 
-            var updatedUser = await _userRepository.GetUserDetailsByIdNoTracking(userId) ?? throw new Exception($"Updated user with ID '{userId}' not found.");
+            var updatedUser = await _userRepository.GetUserDetailsById(userId) ?? throw new Exception($"Updated user with ID '{userId}' not found.");
 
             response.Data = MapToUserResponse(updatedUser);
             response.Message = $"Successfully deleted subscription ID '{subscriptionId}' for user ID '{userId}'.";
@@ -180,7 +182,7 @@ public class SubscriptionService(ProductsDataContext context, UserRepository use
 
         try
         {
-            var user = await _userRepository.GetUserDetailsByIdWithTracking(userId) ?? throw new Exception($"User with ID '{userId}' not found.");
+            var user = await _userRepository.GetUserDetailsById(userId, asNoTracking: false) ?? throw new Exception($"User with ID '{userId}' not found.");
 
             // if the user has any subscriptions
             if (user.Subscriptions == null || user.Subscriptions.Count == 0)
@@ -199,7 +201,7 @@ public class SubscriptionService(ProductsDataContext context, UserRepository use
             _context.Subscriptions.RemoveRange(allSubscriptions);
             await _context.SaveChangesAsync();
 
-            var updatedUser = await _userRepository.GetUserDetailsByIdNoTracking(userId) ?? throw new Exception($"Updated user with ID '{userId}' not found.");
+            var updatedUser = await _userRepository.GetUserDetailsById(userId) ?? throw new Exception($"Updated user with ID '{userId}' not found.");
 
             response.Data = MapToUserResponse(updatedUser);
             response.Message = $"Successfully deleted all subscriptions for user with ID '{userId}'";

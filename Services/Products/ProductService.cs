@@ -4,15 +4,15 @@ using ECommerceProductsAPI.Dtos.Products.Requests;
 using ECommerceProductsAPI.Dtos.Products.Responses;
 using ECommerceProductsAPI.Models;
 using ECommerceProductsAPI.Models.Enums;
-using ECommerceProductsAPI.Repositories;
-using ECommerceProductsAPI.Utils;
+using ECommerceProductsAPI.Repositories.Products;
+using ECommerceProductsAPI.Utils.Mappers;
 using Microsoft.EntityFrameworkCore;
 
 namespace ECommerceProductsAPI.Services.Products;
-public class ProductService(ProductsDataContext context, UserRepository userRepository) : IProductService
+public class ProductService(ProductsDataContext context, IProductRepository productRepository) : IProductService
 {
     private readonly ProductsDataContext _context = context;
-    private readonly UserRepository _userRepository = userRepository;
+    private readonly IProductRepository _productRepository = productRepository;
 
     public async Task<ServiceResponse<List<ProductResponse>>> GetAllProducts()
     {
@@ -102,7 +102,7 @@ public class ProductService(ProductsDataContext context, UserRepository userRepo
 
         try
         {
-            var product = await _userRepository.GetProductDetailsByIdNoTracking(id) ?? throw new Exception($"Product with ID '{id}' not found.");
+            var product = await _productRepository.GetProductDetailsById(id) ?? throw new Exception($"Product with ID '{id}' not found.");
 
             response.Data = MapToProductResponse(product);
             response.Message = $"Successfully retrieved product with ID '{product.Id}'";
@@ -210,7 +210,7 @@ public class ProductService(ProductsDataContext context, UserRepository userRepo
             await _context.Products.AddAsync(product);
             await _context.SaveChangesAsync();
 
-            var addedProduct = await _userRepository.GetProductDetailsByIdNoTracking(product.Id) ?? throw new Exception("Failed to retrieve the newly added product.");
+            var addedProduct = await _productRepository.GetProductDetailsById(product.Id) ?? throw new Exception("Failed to retrieve the newly added product.");
 
             response.Data = MapToProductResponse(addedProduct);
             response.Message = $"Successfully added product with ID '{product.Id}'";
@@ -232,7 +232,7 @@ public class ProductService(ProductsDataContext context, UserRepository userRepo
         {
             ValidateProductType(productRequest.ProductType);
 
-            var product = await _userRepository.GetProductDetailsByIdWithTracking(id) ?? throw new Exception($"Product with ID '{id}' not found.");
+            var product = await _productRepository.GetProductDetailsById(id, asNoTracking: false) ?? throw new Exception($"Product with ID '{id}' not found.");
 
             if (productRequest.Name != product.Name && !string.IsNullOrWhiteSpace(productRequest.Name))
             {
@@ -286,7 +286,7 @@ public class ProductService(ProductsDataContext context, UserRepository userRepo
 
         try
         {
-            var product = await _userRepository.GetProductDetailsByIdWithTracking(id) ?? throw new Exception($"Product with ID '{id}' not found.");
+            var product = await _productRepository.GetProductDetailsById(id, asNoTracking: false) ?? throw new Exception($"Product with ID '{id}' not found.");
 
             await RemoveItemsFromGroupedProduct(product, id);
             await RemoveProductItemReferences(id);

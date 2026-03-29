@@ -4,16 +4,16 @@ using ECommerceProductsAPI.Dtos.Products.Requests;
 using ECommerceProductsAPI.Dtos.Products.Responses;
 using ECommerceProductsAPI.Models;
 using ECommerceProductsAPI.Models.Enums;
-using ECommerceProductsAPI.Repositories;
-using ECommerceProductsAPI.Utils;
+using ECommerceProductsAPI.Repositories.Products;
+using ECommerceProductsAPI.Utils.Mappers;
 using Microsoft.EntityFrameworkCore;
 
 namespace ECommerceProductsAPI.Services.Products.GroupedProducts;
 
-public class GroupedProductService(ProductsDataContext context, UserRepository userRepository) : IGroupedProductService
+public class GroupedProductService(ProductsDataContext context, IProductRepository productRepository) : IGroupedProductService
 {
     private readonly ProductsDataContext _context = context;
-    private readonly UserRepository _userRepository = userRepository;
+    private readonly IProductRepository _productRepository = productRepository;
 
     public async Task<ServiceResponse<ProductResponse>> AddProductToGroupedProduct(GroupedProductRequest request)
     {
@@ -54,7 +54,7 @@ public class GroupedProductService(ProductsDataContext context, UserRepository u
             groupedProduct.GroupedProductItems.Add(groupedProductItem);
             await _context.SaveChangesAsync();
 
-            var updatedGroupedProduct = await _userRepository.GetProductDetailsByIdNoTracking(request.GroupedProductId) ?? throw new Exception($"Updated grouped product with ID '{request.GroupedProductId}' not retrieved.");
+            var updatedGroupedProduct = await _productRepository.GetProductDetailsById(request.GroupedProductId) ?? throw new Exception($"Updated grouped product with ID '{request.GroupedProductId}' not retrieved.");
 
             response.Data = MapToProductResponse(updatedGroupedProduct);
             response.Message = $"Successfully added product with ID '{request.ProductItemId}' to the grouped product with ID '{request.GroupedProductId}'.";
@@ -72,7 +72,7 @@ public class GroupedProductService(ProductsDataContext context, UserRepository u
         var response = new ServiceResponse<ProductResponse>();
         try
         {
-            var groupedProduct = await _userRepository.GetProductDetailsByIdWithTracking(request.GroupedProductId) ?? throw new Exception($"Grouped Product with ID '{request.GroupedProductId}' not found.");
+            var groupedProduct = await _productRepository.GetProductDetailsById(request.GroupedProductId, asNoTracking: false) ?? throw new Exception($"Grouped Product with ID '{request.GroupedProductId}' not found.");
             
             if (groupedProduct.ProductType != ProductType.Grouped)
             {
@@ -118,7 +118,7 @@ public class GroupedProductService(ProductsDataContext context, UserRepository u
 
             await _context.SaveChangesAsync();
 
-            var updatedGroupedProduct = await _userRepository.GetProductDetailsByIdNoTracking(groupedProductId) ?? throw new Exception($"Updated product with ID '{productId}' could not be retrieved.");
+            var updatedGroupedProduct = await _productRepository.GetProductDetailsById(groupedProductId) ?? throw new Exception($"Updated product with ID '{productId}' could not be retrieved.");
 
             response.Data = MapToProductResponse(updatedGroupedProduct);
             response.Message = $"Successfully removed product with ID '{productId}' from grouped product with ID '{groupedProductId}'.";

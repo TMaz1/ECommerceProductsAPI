@@ -2,18 +2,18 @@ using ECommerceProductsAPI.Data;
 using ECommerceProductsAPI.Dtos;
 using ECommerceProductsAPI.Dtos.Users;
 using ECommerceProductsAPI.Models;
-using ECommerceProductsAPI.Repositories;
+using ECommerceProductsAPI.Repositories.Users;
 using ECommerceProductsAPI.Services.Users.Password;
-using ECommerceProductsAPI.Utils;
+using ECommerceProductsAPI.Utils.Mappers;
 using Microsoft.EntityFrameworkCore;
 
 namespace ECommerceProductsAPI.Services.Users.Register;
 
-public class UserRegisterService(ProductsDataContext context, IPasswordService passwordService, UserRepository userRepository) : IUserRegisterService
+public class UserRegisterService(ProductsDataContext context, IPasswordService passwordService, IUserRepository userRepository) : IUserRegisterService
 {
     private readonly ProductsDataContext _context = context;
     private readonly IPasswordService _passwordService = passwordService;
-    private readonly UserRepository _userRepository = userRepository;
+    private readonly IUserRepository _userRepository = userRepository;
 
     public async Task<ServiceResponse<UserResponse>> Register(UserRegister userRequest)
     {
@@ -52,7 +52,7 @@ public class UserRegisterService(ProductsDataContext context, IPasswordService p
             await _context.Users.AddAsync(user);
             await _context.SaveChangesAsync();
 
-            var addedUser = await _userRepository.GetUserDetailsByIdNoTracking(user.Id) ?? throw new Exception("Failed to retrieve the newly added user.");
+            var addedUser = await _userRepository.GetUserDetailsById(user.Id) ?? throw new Exception("Failed to retrieve the newly added user.");
 
             response.Data = MapToUserResponse(addedUser);
             response.Message = $"Successfully registered new user with ID '{user.Id}'";

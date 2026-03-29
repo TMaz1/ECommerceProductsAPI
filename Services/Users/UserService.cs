@@ -2,17 +2,17 @@ using ECommerceProductsAPI.Data;
 using ECommerceProductsAPI.Dtos;
 using ECommerceProductsAPI.Dtos.Users;
 using ECommerceProductsAPI.Models;
-using ECommerceProductsAPI.Repositories;
+using ECommerceProductsAPI.Repositories.Users;
 using ECommerceProductsAPI.Services.Users.Password;
-using ECommerceProductsAPI.Utils;
+using ECommerceProductsAPI.Utils.Mappers;
 using Microsoft.EntityFrameworkCore;
 
 namespace ECommerceProductsAPI.Services.Users;
-public class UserService(ProductsDataContext context, IPasswordService passwordService, UserRepository userRepository) : IUserService
+public class UserService(ProductsDataContext context, IPasswordService passwordService, IUserRepository userRepository) : IUserService
 {
     private readonly ProductsDataContext _context = context;
     private readonly IPasswordService _passwordService = passwordService;
-    private readonly UserRepository _userRepository = userRepository;
+    private readonly IUserRepository _userRepository = userRepository;
 
     public async Task<ServiceResponse<List<UserResponse>>> GetAllUsers()
     {
@@ -98,7 +98,7 @@ public class UserService(ProductsDataContext context, IPasswordService passwordS
 
         try
         {
-            var user = await _userRepository.GetUserDetailsByIdNoTracking(id) ?? throw new Exception($"User with ID '{id}' not found.");
+            var user = await _userRepository.GetUserDetailsById(id) ?? throw new Exception($"User with ID '{id}' not found.");
 
             response.Data = MapToUserResponse(user);
             response.Message = $"Successfully retrieved user with ID '{id}'";
@@ -191,7 +191,7 @@ public class UserService(ProductsDataContext context, IPasswordService passwordS
 
         try
         {
-            var user = await _userRepository.GetUserDetailsByIdWithTracking(id) ?? throw new Exception($"User with ID '{id}' not found.");
+            var user = await _userRepository.GetUserDetailsById(id, asNoTracking: false) ?? throw new Exception($"User with ID '{id}' not found.");
 
             if (user.Email != updatedUser.Email && !string.IsNullOrWhiteSpace(updatedUser.Email))
             {
@@ -276,7 +276,7 @@ public class UserService(ProductsDataContext context, IPasswordService passwordS
 
         try
         {
-            var user = await _userRepository.GetUserDetailsByIdWithTracking(id) ?? throw new Exception($"User with ID '{id}' not found.");
+            var user = await _userRepository.GetUserDetailsById(id, asNoTracking: false) ?? throw new Exception($"User with ID '{id}' not found.");
 
             // get all subscription IDs from user's subscriptions and remove related subscriptions from the Subscription table
             var subscriptionIds = user.Subscriptions.Select(us => us.SubscriptionId).ToList();

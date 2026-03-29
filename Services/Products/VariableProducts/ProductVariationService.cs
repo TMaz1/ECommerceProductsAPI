@@ -4,15 +4,15 @@ using ECommerceProductsAPI.Dtos.Products.Requests.Variations;
 using ECommerceProductsAPI.Dtos.Products.Responses;
 using ECommerceProductsAPI.Models;
 using ECommerceProductsAPI.Models.Enums;
-using ECommerceProductsAPI.Repositories;
-using ECommerceProductsAPI.Utils;
+using ECommerceProductsAPI.Repositories.Products;
+using ECommerceProductsAPI.Utils.Mappers;
 using Microsoft.EntityFrameworkCore;
 
 namespace ECommerceProductsAPI.Services.Products.VariableProducts;
-public class ProductVariationService(ProductsDataContext context, UserRepository userRepository) : IProductVariationService
+public class ProductVariationService(ProductsDataContext context, IProductRepository productRepository) : IProductVariationService
 {
     private readonly ProductsDataContext _context = context;
-    private readonly UserRepository _userRepository = userRepository;
+    private readonly IProductRepository _productRepository = productRepository;
 
     public async Task<ServiceResponse<ProductResponse>> AddProductVariation(AddVariationRequest request)
     {
@@ -40,7 +40,7 @@ public class ProductVariationService(ProductsDataContext context, UserRepository
             product.Variations.Add(productVariation);
             await _context.SaveChangesAsync();
 
-            var updatedProduct = await _userRepository.GetProductDetailsByIdNoTracking(request.ProductId) ?? throw new Exception($"Updated product with ID '{request.ProductId}' cannot be found.");
+            var updatedProduct = await _productRepository.GetProductDetailsById(request.ProductId) ?? throw new Exception($"Updated product with ID '{request.ProductId}' cannot be found.");
 
             response.Data = MapToProductResponse(updatedProduct);
             response.Message = $"Successfully added variation with ID '{productVariation.Id}' for product ID '{request.ProductId}'.";
@@ -60,7 +60,7 @@ public class ProductVariationService(ProductsDataContext context, UserRepository
 
         try
         {
-            var product = await _userRepository.GetProductDetailsByIdWithTracking(request.ProductId) ?? throw new Exception($"Product with ID '{request.ProductId}' does not exist.");
+            var product = await _productRepository.GetProductDetailsById(request.ProductId, asNoTracking: false) ?? throw new Exception($"Product with ID '{request.ProductId}' does not exist.");
 
             var existingVariation = product.Variations.FirstOrDefault(v => v.Id == request.VariationId) ?? throw new Exception($"Variation with ID {request.VariationId} does not exist in product ID {request.ProductId}.");
 
@@ -126,7 +126,7 @@ public class ProductVariationService(ProductsDataContext context, UserRepository
             _context.ProductVariations.Remove(variation);
             await _context.SaveChangesAsync();
 
-            var updatedProduct = await _userRepository.GetProductDetailsByIdNoTracking(productId) ?? throw new Exception($"Updated product with ID '{productId}' cannot be found.");
+            var updatedProduct = await _productRepository.GetProductDetailsById(productId) ?? throw new Exception($"Updated product with ID '{productId}' cannot be found.");
 
             response.Data = MapToProductResponse(updatedProduct);
             response.Message = $"Successfully deleted product variation with ID {variationId}.";

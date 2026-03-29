@@ -2,7 +2,7 @@ using ECommerceProductsAPI.Dtos.Products.Responses;
 using ECommerceProductsAPI.Dtos.Subscription;
 using ECommerceProductsAPI.Models;
 
-namespace ECommerceProductsAPI.Utils;
+namespace ECommerceProductsAPI.Utils.Mappers;
 
 public static class SubscriptionMapper
 {
@@ -26,5 +26,4 @@ public static class SubscriptionMapper
     }
 
     private static BasicProductResponse MapToBasicProductResponse(Product product) => ProductMapper.MapToBasicProductResponse(product);
-    // private static BasicProductResponse? MapToBasicProductResponse(Product product) => (product != null) ? ProductMapper.MapToBasicProductResponse(product) : null;
 }

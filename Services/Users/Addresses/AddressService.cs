@@ -3,15 +3,15 @@ using ECommerceProductsAPI.Dtos;
 using ECommerceProductsAPI.Dtos.Address;
 using ECommerceProductsAPI.Dtos.Users;
 using ECommerceProductsAPI.Models;
-using ECommerceProductsAPI.Repositories;
-using ECommerceProductsAPI.Utils;
+using ECommerceProductsAPI.Repositories.Users;
+using ECommerceProductsAPI.Utils.Mappers;
 using Microsoft.EntityFrameworkCore;
 
 namespace ECommerceProductsAPI.Services.Users.Addresses;
-public class AddressService(ProductsDataContext context, UserRepository userRepository) : IAddressService
+public class AddressService(ProductsDataContext context, IUserRepository userRepository) : IAddressService
 {
     private readonly ProductsDataContext _context = context;
-    private readonly UserRepository _userRepository = userRepository;
+    private readonly IUserRepository _userRepository = userRepository;
 
     public async Task<ServiceResponse<List<AddressResponse>>> GetAddressesByUserId(int userId)
     {
@@ -66,7 +66,7 @@ public class AddressService(ProductsDataContext context, UserRepository userRepo
             await _context.Addresses.AddAsync(address);
             await _context.SaveChangesAsync();
 
-            var updatedUser = await _userRepository.GetUserDetailsByIdNoTracking(userId) ?? throw new Exception($"User with ID '{userId}' not found.");
+            var updatedUser = await _userRepository.GetUserDetailsById(userId) ?? throw new Exception($"User with ID '{userId}' not found.");
 
             response.Data = MapToUserResponse(updatedUser);
             response.Message = $"Successfully added address for user ID '{userId}'";
@@ -120,7 +120,7 @@ public class AddressService(ProductsDataContext context, UserRepository userRepo
 
             await _context.SaveChangesAsync();
 
-            var updatedUser = await _userRepository.GetUserDetailsByIdNoTracking(userId) ?? throw new Exception($"User with ID '{userId}' not found.");
+            var updatedUser = await _userRepository.GetUserDetailsById(userId) ?? throw new Exception($"User with ID '{userId}' not found.");
 
             response.Data = MapToUserResponse(updatedUser);
             response.Message = $"Successfully updated address for user ID '{userId}'";
@@ -145,7 +145,7 @@ public class AddressService(ProductsDataContext context, UserRepository userRepo
             _context.Addresses.Remove(address);
             await _context.SaveChangesAsync();
 
-            var updatedUser = await _userRepository.GetUserDetailsByIdNoTracking(userId) ?? throw new Exception($"User with ID '{userId}' not found.");
+            var updatedUser = await _userRepository.GetUserDetailsById(userId) ?? throw new Exception($"User with ID '{userId}' not found.");
 
             response.Data = MapToUserResponse(updatedUser);
             response.Message = $"Successfully deleted address with ID '{addressId}' for user ID '{userId}'";

@@ -12,7 +12,8 @@ using ECommerceProductsAPI.Services.Products.GroupedProducts;
 using ECommerceProductsAPI.Utils.CustomRegex;
 using System.Text.Json.Serialization;
 using System.Text.Json;
-using ECommerceProductsAPI.Repositories;
+using ECommerceProductsAPI.Repositories.Users;
+using ECommerceProductsAPI.Repositories.Products;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,7 +21,6 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<ProductsDataContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
     
-// builder.Services.AddControllers(); 
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase, allowIntegerValues: false));
@@ -58,16 +58,16 @@ builder.Services.AddScoped<IPasswordService, PasswordService>();
 builder.Services.AddScoped<IStrongPasswordRegex, StrongPasswordRegex>();
 
 builder.Services.AddScoped<IRedisCacheService, RedisCacheService>();
-builder.Services.AddScoped<UserRepository>();
+
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
 
 var app = builder.Build();
-// app.Services.GetRequiredService<IServiceProvider>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    // app.UseSwaggerUI();
     app.UseSwaggerUI(options =>
     {
         options.SwaggerEndpoint("/swagger/v1/swagger.json", "E-Commerce Products API");

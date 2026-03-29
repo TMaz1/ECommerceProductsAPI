@@ -1,7 +1,7 @@
 using ECommerceProductsAPI.Dtos.Address;
 using ECommerceProductsAPI.Models;
 
-namespace ECommerceProductsAPI.Utils;
+namespace ECommerceProductsAPI.Utils.Mappers;
 
 public static class AddressMapper
 {

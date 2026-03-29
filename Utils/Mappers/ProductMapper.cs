@@ -2,7 +2,7 @@ using ECommerceProductsAPI.Dtos.Products.Responses;
 using ECommerceProductsAPI.Models;
 using ECommerceProductsAPI.Models.Enums;
 
-namespace ECommerceProductsAPI.Utils;
+namespace ECommerceProductsAPI.Utils.Mappers;
 
 public static class ProductMapper
 {
@@ -36,19 +36,19 @@ public static class ProductMapper
             IsSubscription = product.IsSubscription,
             CreatedAt = product.CreatedAt,
             LastUpdated = product.UpdatedAt,
-            Variations = product.Variations.Select(variation => new ProductVariationResponse
+            Variations = [.. product.Variations.Select(variation => new ProductVariationResponse
             {
                 Id = variation.Id,
                 SKU = variation.SKU,
                 Price = variation.Price,
                 Stock = variation.Stock,
-                Attributes = variation.VariationAttributes.Select(va => new ProductAttributeResponse
+                Attributes = [.. variation.VariationAttributes.Select(va => new ProductAttributeResponse
                 {
                     Id = va.Attribute.Id,
                     Type = va.Attribute.Type,
                     Value = va.Attribute.Value
-                }).ToList()
-            }).ToList(),
+                })]
+            })],
             GroupedProductItems = product.GroupedProductItems?.Select(gpi => new GroupedProductItemResponse
             {
                 Id = gpi.Id,
